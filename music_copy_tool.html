@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muziek Kopieer Tool</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { margin-bottom: 20px; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+th { background-color: #f4f4f4; }
+input[type=number] { width: 60px; }
+button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h1>Muziek Kopieer Tool</h1>
+<label>Kies de map met partituren:</label>
+<input type="file" id="fileInput" webkitdirectory directory multiple />
+
+<table id="fileTable" style="display:none;">
+<thead>
+<tr><th>Bestandsnaam</th><th>Aantal kopieën</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<button id="createZipBtn" style="display:none;">Maak ZIP</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileTable = document.getElementById('fileTable');
+const tbody = fileTable.querySelector('tbody');
+const createZipBtn = document.getElementById('createZipBtn');
+
+fileInput.addEventListener('change', () => {
+    tbody.innerHTML = '';
+    const files = Array.from(fileInput.files);
+    if(files.length === 0) return;
+
+    files.forEach((file, index) => {
+        const row = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        nameCell.textContent = file.name;
+        const copyCell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = 0;
+        input.value = 1;
+        input.dataset.index = index;
+        copyCell.appendChild(input);
+        row.appendChild(nameCell);
+        row.appendChild(copyCell);
+        tbody.appendChild(row);
+    });
+
+    fileTable.style.display = '';
+    createZipBtn.style.display = '';
+});
+
+createZipBtn.addEventListener('click', async () => {
+    const zip = new JSZip();
+    const files = Array.from(fileInput.files);
+
+    tbody.querySelectorAll('input[type=number]').forEach(input => {
+        const index = parseInt(input.dataset.index);
+        const count = parseInt(input.value);
+        const file = files[index];
+        for(let i=1; i<=count; i++) {
+            zip.file(`${i}_${file.name}`, file);
+        }
+    });
+
+    const content = await zip.generateAsync({type:'blob'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = 'partituren.zip';
+    a.click();
+});
+</script>
+
+</body>
+</html>
