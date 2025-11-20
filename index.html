@@ -10,7 +10,10 @@ h1 { margin-bottom: 20px; }
 table { border-collapse: collapse; width: 100%; margin-top: 20px; }
 th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
 th { background-color: #f4f4f4; }
+tbody tr:nth-child(even) { background-color: #f9f9f9; }
+tbody tr:nth-child(odd) { background-color: #eaeaea; }
 input[type=number] { width: 60px; }
+select { padding: 4px; }
 button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
 </style>
 </head>
@@ -22,7 +25,7 @@ button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
 
 <table id="fileTable" style="display:none;">
 <thead>
-<tr><th>Bestandsnaam</th><th>Aantal kopieën</th></tr>
+<tr><th>Bestandsnaam</th><th>Aantal kopieën</th><th>Categorie</th></tr>
 </thead>
 <tbody></tbody>
 </table>
@@ -36,15 +39,33 @@ const fileTable = document.getElementById('fileTable');
 const tbody = fileTable.querySelector('tbody');
 const createZipBtn = document.getElementById('createZipBtn');
 
+const slagwerkInstruments = ['trom', 'bekkens', 'grote trom', 'cowbell', "bongo"];
+const blazersInstruments = ['lyra', 'bastrompet', 'trompet', 'sousafoon', 'jachthoorn'];
+const instrumentNumbers = {
+    'jachthoorn': 1,
+    'trompet': 2,
+    'lyra': 3,
+    'bastrompet': 4,
+    'sousafoon': 5,
+    'trom': 1,
+    'bekkens': 2,
+    'grote trom': 3,
+    'cowbell': 4,
+    'bongo': 5
+};
+const categoryNumbers = { 'Blazers': 1, 'Slagwerk': 2 };
+
 fileInput.addEventListener('change', () => {
     tbody.innerHTML = '';
-    const files = Array.from(fileInput.files);
+    const files = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
     if(files.length === 0) return;
 
     files.forEach((file, index) => {
         const row = document.createElement('tr');
+
         const nameCell = document.createElement('td');
         nameCell.textContent = file.name;
+
         const copyCell = document.createElement('td');
         const input = document.createElement('input');
         input.type = 'number';
@@ -52,8 +73,47 @@ fileInput.addEventListener('change', () => {
         input.value = 1;
         input.dataset.index = index;
         copyCell.appendChild(input);
+
+        const categoryCell = document.createElement('td');
+        const select = document.createElement('select');
+        const optionNone = document.createElement('option');
+        optionNone.value = '';
+        optionNone.text = 'Selecteer';
+        const optionBlazers = document.createElement('option');
+        optionBlazers.value = 'Blazers';
+        optionBlazers.text = 'Blazers';
+        const optionSlagwerk = document.createElement('option');
+        optionSlagwerk.value = 'Slagwerk';
+        optionSlagwerk.text = 'Slagwerk';
+        select.add(optionNone);
+        select.add(optionBlazers);
+        select.add(optionSlagwerk);
+
+        const nameLower = file.name.toLowerCase();
+        let assigned = false;
+        for(const instr of blazersInstruments){
+            if(nameLower.includes(instr)){
+                select.value = 'Blazers';
+                assigned = true;
+                break;
+            }
+        }
+        if(!assigned){
+            for(const instr of slagwerkInstruments){
+                if(nameLower.includes(instr)){
+                    select.value = 'Slagwerk';
+                    assigned = true;
+                    break;
+                }
+            }
+        }
+        if(!assigned) select.value = '';
+
+        categoryCell.appendChild(select);
+
         row.appendChild(nameCell);
         row.appendChild(copyCell);
+        row.appendChild(categoryCell);
         tbody.appendChild(row);
     });
 
@@ -63,28 +123,55 @@ fileInput.addEventListener('change', () => {
 
 createZipBtn.addEventListener('click', async () => {
     const zip = new JSZip();
-    const files = Array.from(fileInput.files);
+    const files = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
 
-    tbody.querySelectorAll('input[type=number]').forEach(input => {
-        const index = parseInt(input.dataset.index);
-        const count = parseInt(input.value);
+    const fileData = [];
+    tbody.querySelectorAll('tr').forEach((row, index) => {
         const file = files[index];
-        for(let i=1; i<=count; i++) {
-            zip.file(`${i}_${file.name}`, file);
-        }
+        const count = parseInt(row.querySelector('input[type=number]').value);
+        const category = row.querySelector('select').value;
+        fileData.push({file, count, category});
     });
 
+    // Groepeer per categorie
+    const blazersFiles = fileData.filter(f => f.category === 'Blazers');
+    const slagwerkFiles = fileData.filter(f => f.category === 'Slagwerk');
+    blazersFiles.sort((a,b) => a.file.name.localeCompare(b.file.name));
+    slagwerkFiles.sort((a,b) => a.file.name.localeCompare(b.file.name));
+    const finalList = [...blazersFiles, ...slagwerkFiles];
+
+    // Counters per categorie
+    const categoryCounters = { 'Blazers':1, 'Slagwerk':1 };
+
+    finalList.forEach(item => {
+        const catNum = categoryNumbers[item.category] || 0;
+        let instrNum = 0;
+        for(const [key, num] of Object.entries(instrumentNumbers)){
+            if(item.file.name.toLowerCase().includes(key)){
+                instrNum = num;
+                break;
+            }
+        }
+        if(instrNum === 0) instrNum = 0;
+
+        const counter = categoryCounters[item.category];
+        for(let i=1; i<=item.count; i++){
+            zip.file(`${catNum} ${instrNum} ${counter} kopie${i} ${item.file.name}`, item.file);
+        }
+        categoryCounters[item.category] = counter + 1;
+    });
+
+    let folderName = 'partituren';
+    if(files.length > 0){
+        const firstPath = files[0].webkitRelativePath;
+        folderName = firstPath.split('/')[0];
+    }
+
     const content = await zip.generateAsync({type:'blob'});
-let folderName = 'partituren'; // fallback
-if (fileInput.files.length > 0) {
-    // pak het eerste bestand en haal de mapnaam
-    const firstPath = fileInput.files[0].webkitRelativePath;
-    folderName = firstPath.split('/')[0]; // eerste folder
-}
-const a = document.createElement('a');
-a.href = URL.createObjectURL(content);
-a.download = folderName + '_kp.zip';
-a.click();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(content);
+    a.download = folderName + '_kp.zip';
+    a.click();
 });
 </script>
 
