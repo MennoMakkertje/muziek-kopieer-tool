@@ -75,10 +75,16 @@ createZipBtn.addEventListener('click', async () => {
     });
 
     const content = await zip.generateAsync({type:'blob'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(content);
-    a.download = 'partituren.zip';
-    a.click();
+let folderName = 'partituren'; // fallback
+if (fileInput.files.length > 0) {
+    // pak het eerste bestand en haal de mapnaam
+    const firstPath = fileInput.files[0].webkitRelativePath;
+    folderName = firstPath.split('/')[0]; // eerste folder
+}
+const a = document.createElement('a');
+a.href = URL.createObjectURL(content);
+a.download = folderName + '_kp.zip';
+a.click();
 });
 </script>
 
