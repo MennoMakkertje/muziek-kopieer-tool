@@ -39,19 +39,24 @@ const fileTable = document.getElementById('fileTable');
 const tbody = fileTable.querySelector('tbody');
 const createZipBtn = document.getElementById('createZipBtn');
 
-const slagwerkInstruments = ['trom', 'bekkens', 'grote trom', 'cowbell', "bongo"];
-const blazersInstruments = ['lyra', 'bastrompet', 'trompet', 'sousafoon', 'jachthoorn'];
+const slagwerkInstruments = ['trom', 'snare drum', 'bekkens', 'cymbals', 'grote trom', 'bass drum' 'cowbell', 'shaker', "bongo"];
+const blazersInstruments = ['lyra', 'bastrompet', 'trompet', 'sousafoon', 'jachthoorn', 'alt'];
 const instrumentNumbers = {
     'jachthoorn': 1,
     'trompet': 2,
     'lyra': 3,
     'bastrompet': 4,
-    'sousafoon': 5,
+    'alt': 5,
+    'sousafoon': 6,
     'trom': 1,
+    'snare drum': 1,
     'bekkens': 2,
+    'cymbals': 2,
     'grote trom': 3,
+    'bass drum': 3,
     'cowbell': 4,
-    'bongo': 5
+    'bongo': 5,
+    'shaker': 6
 };
 const categoryNumbers = { 'Blazers': 1, 'Slagwerk': 2 };
 
