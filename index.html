@@ -52,73 +52,94 @@ const presetContainer = document.getElementById('presetContainer');
 let loadedFiles = [];
 
 // =========================================================================
-// INSTELBARE PRESETS (pas de aantallen per instrument hier aan).
-// Je kunt synoniemen scheiden met een komma (bijv. 'bekkens, cymbals').
+// INSTELBARE PRESETS
+// Je kunt specifieke partijen (1, 2, I, II) en algemene partijen los instellen.
 // =========================================================================
 const presets = {
     'KK': {
         'bekkens, cymbals': 0,
+        'bastrompet, bas trompet': 0,
+
+        'trompet 1, 1e trompet, trompet i': 0,
+        'trompet 2, 2e trompet, trompet ii': 0,
         'trompet': 0,
-        'trom, snare drum': 0,
-        'grote trom, bass drum': 0,
-        'lyra': 0,
-        'bastrompet, bas': 0,
+
+        'jachthoorn 1, 1e jachthoorn, jachthoorn i': 0,
+        'jachthoorn 2, 2e jachthoorn, jachthoorn ii': 0,
         'jachthoorn': 0,
+
+        'grote trom, bass drum': 0,
+        'trom, snare drum, tamboer': 0,
+        'lyra': 0,
         'alt': 0,
-        'sousafoon': 0,
-        'cowbell': 0,
+        'sousafoon, bas': 0,
+        'cowbell, koebel': 0,
         'bongo': 0,
-        'shaker': 0,
-        'Directie': 0
+        'shaker': 0
     },
     'JK': {
         'bekkens, cymbals': 0,
-        'trompet': 0,
-        'trom, snare drum': 0,
-        'grote trom, bass drum': 0,
-        'lyra': 0,
-        'bastrompet, bas': 0,
-        'jachthoorn': 0,
-        'alt': 0,
-        'sousafoon': 0,
-        'cowbell': 0,
-        'bongo': 0,
-        'shaker': 0,
-        'Directie': 0
+        'bastrompet, bas trompet': 0,
 
+        'trompet 1, 1e trompet, trompet i': 0,
+        'trompet 2, 2e trompet, trompet ii': 0,
+        'trompet': 0,
+
+        'jachthoorn 1, 1e jachthoorn, jachthoorn i': 0,
+        'jachthoorn 2, 2e jachthoorn, jachthoorn ii': 0,
+        'jachthoorn': 0,
+
+        'grote trom, bass drum': 0,
+        'trom, snare drum, tamboer': 0,
+        'lyra': 0,
+        'alt': 0,
+        'sousafoon, bas': 0,
+        'cowbell, koebel': 0,
+        'bongo': 0,
+        'shaker': 0
     },
     'JHK': {
         'bekkens, cymbals': 2,
+        'bastrompet, bas trompet': 4,
+
+        'trompet 1, 1e trompet, trompet i': 5,
+        'trompet 2, 2e trompet, trompet ii': 5,
         'trompet': 10,
-        'trom, snare drum':7,
-        'grote trom, bass drum': 1,
-        'lyra': 3,
-        'bastrompet, bas': 4,
+
+        'jachthoorn 1, 1e jachthoorn, jachthoorn i': 6,
+        'jachthoorn 2, 2e jachthoorn, jachthoorn ii': 5,
         'jachthoorn': 11,
-        'alt': 0,
-        'sousafoon': 1,
-        'cowbell': 1,
+
+        'grote trom, bass drum': 2,
+        'trom, snare drum, tamboer': 7,
+        'lyra': 3,
+        'alt': 11,
+        'sousafoon, bas': 1,
+        'cowbell, koebel': 0,
         'bongo': 1,
-        'shaker': 1,
-        'Directie': 0
+        'shaker': 1
     }
 };
 
-const slagwerkInstruments = ['trom', 'snare drum', 'bekkens', 'cymbals', 'grote trom', 'bass drum', 'cowbell', 'shaker', "bongo"];
-const blazersInstruments = ['lyra', 'bastrompet', 'trompet', 'sousafoon', 'jachthoorn', 'alt', 'bas'];
+const slagwerkInstruments = ['grote trom', 'bass drum', 'snare drum', 'tamboer', 'bekkens', 'cymbals', 'cowbell', 'shaker', 'bongo', 'trom'];
+const blazersInstruments = ['bastrompet', 'bas trompet', 'jachthoorn', 'trompet', 'sousafoon', 'lyra', 'alt', 'bas'];
+
 const instrumentNumbers = {
+    'bas trompet': 4,
+    'bastrompet': 4,
     'jachthoorn': 1,
     'trompet': 2,
     'lyra': 3,
-    'bastrompet': 4,
     'alt': 5,
     'sousafoon': 6,
-    'trom': 1,
-    'snare drum': 1,
-    'bekkens': 2,
-    'cymbals': 2,
+    'bas': 6,
     'grote trom': 3,
     'bass drum': 3,
+    'snare drum': 1,
+    'tamboer': 1,
+    'trom': 1,
+    'bekkens': 2,
+    'cymbals': 2,
     'cowbell': 4,
     'bongo': 5,
     'shaker': 6
@@ -129,6 +150,9 @@ fileInput.addEventListener('change', () => {
     tbody.innerHTML = '';
     loadedFiles = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
     if(loadedFiles.length === 0) return;
+
+    const sortedBlazers = [...blazersInstruments].sort((a,b) => b.length - a.length);
+    const sortedSlagwerk = [...slagwerkInstruments].sort((a,b) => b.length - a.length);
 
     loadedFiles.forEach((file, index) => {
         const row = document.createElement('tr');
@@ -161,7 +185,8 @@ fileInput.addEventListener('change', () => {
 
         const nameLower = file.name.toLowerCase();
         let assigned = false;
-        for(const instr of blazersInstruments){
+        
+        for(const instr of sortedBlazers){
             if(nameLower.includes(instr)){
                 select.value = 'Blazers';
                 assigned = true;
@@ -169,7 +194,7 @@ fileInput.addEventListener('change', () => {
             }
         }
         if(!assigned){
-            for(const instr of slagwerkInstruments){
+            for(const instr of sortedSlagwerk){
                 if(nameLower.includes(instr)){
                     select.value = 'Slagwerk';
                     assigned = true;
@@ -197,24 +222,35 @@ function applyPreset(presetKey) {
     const selectedPreset = presets[presetKey];
     if (!selectedPreset) return;
 
+    // Verzamel alle zoekwoorden en sorteer ze op LENGTE (langste zoekwoord eerst)
+    const searchItems = [];
+    for (const [instruments, count] of Object.entries(selectedPreset)) {
+        const synonyms = instruments.split(',').map(s => s.trim().toLowerCase());
+        for (const syn of synonyms) {
+            if (syn) {
+                searchItems.push({ keyword: syn, count: count });
+            }
+        }
+    }
+    
+    // Sorteer van langste woord naar kortste woord
+    // Hierdoor wordt bijvoorbeeld 'trompet 1' altijd VÓÓR 'trompet' gecontroleerd!
+    searchItems.sort((a, b) => b.keyword.length - a.keyword.length);
+
     const rows = tbody.querySelectorAll('tr');
     rows.forEach((row, index) => {
         const fileName = loadedFiles[index].name.toLowerCase();
         const input = row.querySelector('input[type=number]');
         
         let matchFound = false;
-        for (const [instruments, count] of Object.entries(selectedPreset)) {
-            // Splits synoniemen die gescheiden zijn door een komma
-            const synonyms = instruments.split(',').map(s => s.trim().toLowerCase());
-            
-            if (synonyms.some(instr => fileName.includes(instr))) {
-                input.value = count;
+        for (const item of searchItems) {
+            if (fileName.includes(item.keyword)) {
+                input.value = item.count;
                 matchFound = true;
-                break;
+                break; // Stop bij de eerste (meest specifieke) match
             }
         }
         
-        // Als het bestand niet in de gekozen preset voorkomt, zetten we het aantal op 0
         if (!matchFound) {
             input.value = 0;
         }
@@ -242,16 +278,18 @@ createZipBtn.addEventListener('click', async () => {
     // Counters per categorie
     const categoryCounters = { 'Blazers':1, 'Slagwerk':1 };
 
+    const sortedInstrKeys = Object.keys(instrumentNumbers).sort((a, b) => b.length - a.length);
+
     finalList.forEach(item => {
         const catNum = categoryNumbers[item.category] || 0;
         let instrNum = 0;
-        for(const [key, num] of Object.entries(instrumentNumbers)){
+        
+        for(const key of sortedInstrKeys){
             if(item.file.name.toLowerCase().includes(key)){
-                instrNum = num;
+                instrNum = instrumentNumbers[key];
                 break;
             }
         }
-        if(instrNum === 0) instrNum = 0;
 
         const counter = categoryCounters[item.category];
         for(let i=1; i<=item.count; i++){
