@@ -52,32 +52,51 @@ const presetContainer = document.getElementById('presetContainer');
 let loadedFiles = [];
 
 // =========================================================================
-// INSTELBARE PRESETS (pas de aantallen per instrument hier aan):
+// INSTELBARE PRESETS (pas de aantallen per instrument hier aan).
+// Je kunt synoniemen scheiden met een komma (bijv. 'bekkens, cymbals').
 // =========================================================================
 const presets = {
     'KK': {
-        'bekkens': 4,
+        'bekkens, cymbals': 4,
         'trompet': 10,
-        'snare drum': 2,
-        'grote trom': 1,
+        'trom, snare drum': 2,
+        'grote trom, bass drum': 1,
         'lyra': 2,
-        'bastrompet': 3
+        'bastrompet': 3,
+        'jachthoorn': 2,
+        'alt': 2,
+        'sousafoon': 1,
+        'cowbell': 1,
+        'bongo': 1,
+        'shaker': 1
     },
     'JK': {
-        'bekkens': 2,
+        'bekkens, cymbals': 2,
         'trompet': 5,
-        'snare drum': 1,
-        'grote trom': 1,
+        'trom, snare drum': 1,
+        'grote trom, bass drum': 1,
         'lyra': 1,
-        'bastrompet': 2
+        'bastrompet': 2,
+        'jachthoorn': 1,
+        'alt': 1,
+        'sousafoon': 1,
+        'cowbell': 1,
+        'bongo': 1,
+        'shaker': 1
     },
     'JHK': {
-        'bekkens': 3,
+        'bekkens, cymbals': 3,
         'trompet': 8,
-        'snare drum': 3,
-        'grote trom': 2,
+        'trom, snare drum': 3,
+        'grote trom, bass drum': 2,
         'lyra': 2,
-        'bastrompet': 4
+        'bastrompet': 4,
+        'jachthoorn': 2,
+        'alt': 2,
+        'sousafoon': 2,
+        'cowbell': 2,
+        'bongo': 2,
+        'shaker': 2
     }
 };
 
@@ -129,7 +148,7 @@ fileInput.addEventListener('change', () => {
         const optionBlazers = document.createElement('option');
         optionBlazers.value = 'Blazers';
         optionBlazers.text = 'Blazers';
-        optionSlagwerk = document.createElement('option');
+        const optionSlagwerk = document.createElement('option');
         optionSlagwerk.value = 'Slagwerk';
         optionSlagwerk.text = 'Slagwerk';
         select.add(optionNone);
@@ -180,15 +199,18 @@ function applyPreset(presetKey) {
         const input = row.querySelector('input[type=number]');
         
         let matchFound = false;
-        for (const [instrument, count] of Object.entries(selectedPreset)) {
-            if (fileName.includes(instrument.toLowerCase())) {
+        for (const [instruments, count] of Object.entries(selectedPreset)) {
+            // Splits synoniemen die gescheiden zijn door een komma
+            const synonyms = instruments.split(',').map(s => s.trim().toLowerCase());
+            
+            if (synonyms.some(instr => fileName.includes(instr))) {
                 input.value = count;
                 matchFound = true;
                 break;
             }
         }
         
-        // Als het bestand niet voorkomt in de gekozen preset, wordt de value op 0 gezet
+        // Als het bestand niet in de gekozen preset voorkomt, zetten we het aantal op 0
         if (!matchFound) {
             input.value = 0;
         }
