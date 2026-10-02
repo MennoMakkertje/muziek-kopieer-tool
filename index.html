@@ -15,6 +15,8 @@ tbody tr:nth-child(odd) { background-color: #eaeaea; }
 input[type=number] { width: 60px; }
 select { padding: 4px; }
 button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+.preset-container { margin-top: 15px; }
+.preset-btn { margin-top: 0; margin-right: 10px; padding: 6px 12px; }
 </style>
 </head>
 <body>
@@ -22,6 +24,13 @@ button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
 <h1>Muziek Kopieer Tool</h1>
 <label>Kies de map met partituren:</label>
 <input type="file" id="fileInput" webkitdirectory directory multiple />
+
+<div id="presetContainer" class="preset-container" style="display:none;">
+  <strong>Snelaantallen instellen:</strong>
+  <button type="button" class="preset-btn" onclick="applyPreset('KK')">KK</button>
+  <button type="button" class="preset-btn" onclick="applyPreset('JK')">JK</button>
+  <button type="button" class="preset-btn" onclick="applyPreset('JHK')">JHK</button>
+</div>
 
 <table id="fileTable" style="display:none;">
 <thead>
@@ -38,6 +47,39 @@ const fileInput = document.getElementById('fileInput');
 const fileTable = document.getElementById('fileTable');
 const tbody = fileTable.querySelector('tbody');
 const createZipBtn = document.getElementById('createZipBtn');
+const presetContainer = document.getElementById('presetContainer');
+
+let loadedFiles = [];
+
+// =========================================================================
+// INSTELBARE PRESETS (pas de aantallen per instrument hier aan):
+// =========================================================================
+const presets = {
+    'KK': {
+        'bekkens': 4,
+        'trompet': 10,
+        'snare drum': 2,
+        'grote trom': 1,
+        'lyra': 2,
+        'bastrompet': 3
+    },
+    'JK': {
+        'bekkens': 2,
+        'trompet': 5,
+        'snare drum': 1,
+        'grote trom': 1,
+        'lyra': 1,
+        'bastrompet': 2
+    },
+    'JHK': {
+        'bekkens': 3,
+        'trompet': 8,
+        'snare drum': 3,
+        'grote trom': 2,
+        'lyra': 2,
+        'bastrompet': 4
+    }
+};
 
 const slagwerkInstruments = ['trom', 'snare drum', 'bekkens', 'cymbals', 'grote trom', 'bass drum', 'cowbell', 'shaker', "bongo"];
 const blazersInstruments = ['lyra', 'bastrompet', 'trompet', 'sousafoon', 'jachthoorn', "alt"];
@@ -62,10 +104,10 @@ const categoryNumbers = { 'Blazers': 1, 'Slagwerk': 2 };
 
 fileInput.addEventListener('change', () => {
     tbody.innerHTML = '';
-    const files = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
-    if(files.length === 0) return;
+    loadedFiles = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
+    if(loadedFiles.length === 0) return;
 
-    files.forEach((file, index) => {
+    loadedFiles.forEach((file, index) => {
         const row = document.createElement('tr');
 
         const nameCell = document.createElement('td');
@@ -87,7 +129,7 @@ fileInput.addEventListener('change', () => {
         const optionBlazers = document.createElement('option');
         optionBlazers.value = 'Blazers';
         optionBlazers.text = 'Blazers';
-        const optionSlagwerk = document.createElement('option');
+        optionSlagwerk = document.createElement('option');
         optionSlagwerk.value = 'Slagwerk';
         optionSlagwerk.text = 'Slagwerk';
         select.add(optionNone);
@@ -123,16 +165,42 @@ fileInput.addEventListener('change', () => {
     });
 
     fileTable.style.display = '';
+    presetContainer.style.display = '';
     createZipBtn.style.display = '';
 });
 
+// Functie om de preset-aantallen toe te passen
+function applyPreset(presetKey) {
+    const selectedPreset = presets[presetKey];
+    if (!selectedPreset) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach((row, index) => {
+        const fileName = loadedFiles[index].name.toLowerCase();
+        const input = row.querySelector('input[type=number]');
+        
+        let matchFound = false;
+        for (const [instrument, count] of Object.entries(selectedPreset)) {
+            if (fileName.includes(instrument.toLowerCase())) {
+                input.value = count;
+                matchFound = true;
+                break;
+            }
+        }
+        
+        // Als het bestand niet voorkomt in de gekozen preset, wordt de value op 0 gezet
+        if (!matchFound) {
+            input.value = 0;
+        }
+    });
+}
+
 createZipBtn.addEventListener('click', async () => {
     const zip = new JSZip();
-    const files = Array.from(fileInput.files).filter(f => f.name.toLowerCase().endsWith('.pdf'));
 
     const fileData = [];
     tbody.querySelectorAll('tr').forEach((row, index) => {
-        const file = files[index];
+        const file = loadedFiles[index];
         const count = parseInt(row.querySelector('input[type=number]').value);
         const category = row.querySelector('select').value;
         fileData.push({file, count, category});
@@ -167,8 +235,8 @@ createZipBtn.addEventListener('click', async () => {
     });
 
     let folderName = 'partituren';
-    if(files.length > 0){
-        const firstPath = files[0].webkitRelativePath;
+    if(loadedFiles.length > 0){
+        const firstPath = loadedFiles[0].webkitRelativePath;
         folderName = firstPath.split('/')[0];
     }
 
